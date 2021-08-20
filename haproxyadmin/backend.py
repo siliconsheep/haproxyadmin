@@ -10,52 +10,56 @@ This module provides the :class:`Backend <.Backend>` class which allows to
 run operation for a backend.
 
 """
-from haproxyadmin.utils import (calculate, cmd_across_all_procs,
-                                compare_values, converter)
+from haproxyadmin.utils import (
+    calculate,
+    cmd_across_all_procs,
+    compare_values,
+    converter,
+)
 from haproxyadmin.server import Server
 
 
 BACKEND_METRICS = [
-    'act',
-    'bck',
-    'bin',
-    'bout',
-    'chkdown',
-    'cli_abrt',
-    'comp_byp',
-    'comp_in',
-    'comp_out',
-    'comp_rsp',
-    'ctime',
-    'downtime',
-    'dreq',
-    'dresp',
-    'econ',
-    'eresp',
-    'hrsp_1xx',
-    'hrsp_2xx',
-    'hrsp_3xx',
-    'hrsp_4xx',
-    'hrsp_5xx',
-    'hrsp_other',
-    'lastchg',
-    'lastsess',
-    'lbtot',
-    'qcur',
-    'qmax',
-    'qtime',
-    'rate',
-    'rate_max',
-    'rtime',
-    'scur',
-    'slim',
-    'smax',
-    'srv_abrt',
-    'stot',
-    'ttime',
-    'weight',
-    'wredis',
-    'wretr',
+    "act",
+    "bck",
+    "bin",
+    "bout",
+    "chkdown",
+    "cli_abrt",
+    "comp_byp",
+    "comp_in",
+    "comp_out",
+    "comp_rsp",
+    "ctime",
+    "downtime",
+    "dreq",
+    "dresp",
+    "econ",
+    "eresp",
+    "hrsp_1xx",
+    "hrsp_2xx",
+    "hrsp_3xx",
+    "hrsp_4xx",
+    "hrsp_5xx",
+    "hrsp_other",
+    "lastchg",
+    "lastsess",
+    "lbtot",
+    "qcur",
+    "qmax",
+    "qtime",
+    "rate",
+    "rate_max",
+    "rtime",
+    "scur",
+    "slim",
+    "smax",
+    "srv_abrt",
+    "stot",
+    "ttime",
+    "weight",
+    "wredis",
+    "wretr",
 ]
 
 
@@ -74,14 +78,14 @@ class Backend(object):
     # built-in comparison operator is adjusted
     def __eq__(self, other):
         if isinstance(other, Backend):
-            return (self.name == other.name)
+            return self.name == other.name
         elif isinstance(other, str):
-            return (self.name == other)
+            return self.name == other
         else:
             return False
 
     def __ne__(self, other):
-        return (not self.__eq__(other))
+        return not self.__eq__(other)
 
     @property
     def iid(self):
@@ -190,7 +194,7 @@ class Backend(object):
 
         :rtype: integer
         """
-        return self.metric('stot')
+        return self.metric("stot")
 
     def requests_per_process(self):
         """Return the number of requests for the backend per process.
@@ -203,7 +207,7 @@ class Backend(object):
         :rtype: ``list``
 
         """
-        results = cmd_across_all_procs(self._backend_per_proc, 'metric', 'stot')
+        results = cmd_across_all_procs(self._backend_per_proc, "metric", "stot")
 
         return results
 
@@ -218,7 +222,7 @@ class Backend(object):
         :rtype: ``list``
 
         """
-        values = cmd_across_all_procs(self._backend_per_proc, 'stats')
+        values = cmd_across_all_procs(self._backend_per_proc, "stats")
 
         return values
 
@@ -231,6 +235,6 @@ class Backend(object):
           per process.
 
         """
-        results = cmd_across_all_procs(self._backend_per_proc, 'metric', 'status')
+        results = cmd_across_all_procs(self._backend_per_proc, "metric", "status")
 
         return compare_values(results)

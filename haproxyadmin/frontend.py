@@ -10,36 +10,42 @@ This module provides the :class:`Frontend <.Frontend>` class. This class can
 be used to run operations on a frontend and retrieve statistics.
 
 """
-from haproxyadmin.utils import (calculate, cmd_across_all_procs, converter,
-                                check_command, should_die, compare_values)
+from haproxyadmin.utils import (
+    calculate,
+    cmd_across_all_procs,
+    converter,
+    check_command,
+    should_die,
+    compare_values,
+)
 
 
 FRONTEND_METRICS = [
-    'bin',
-    'bout',
-    'comp_byp',
-    'comp_in',
-    'comp_out',
-    'comp_rsp',
-    'dreq',
-    'dresp',
-    'ereq',
-    'hrsp_1xx',
-    'hrsp_2xx',
-    'hrsp_3xx',
-    'hrsp_4xx',
-    'hrsp_5xx',
-    'hrsp_other',
-    'rate',
-    'rate_lim',
-    'rate_max',
-    'req_rate',
-    'req_rate_max',
-    'req_tot',
-    'scur',
-    'slim',
-    'smax',
-    'stot',
+    "bin",
+    "bout",
+    "comp_byp",
+    "comp_in",
+    "comp_out",
+    "comp_rsp",
+    "dreq",
+    "dresp",
+    "ereq",
+    "hrsp_1xx",
+    "hrsp_2xx",
+    "hrsp_3xx",
+    "hrsp_4xx",
+    "hrsp_5xx",
+    "hrsp_other",
+    "rate",
+    "rate_lim",
+    "rate_max",
+    "req_rate",
+    "req_rate_max",
+    "req_tot",
+    "scur",
+    "slim",
+    "smax",
+    "stot",
 ]
 
 
@@ -60,14 +66,14 @@ class Frontend(object):
     # x == frontend_obj
     def __eq__(self, other):
         if isinstance(other, Frontend):
-            return (self.name == other.name)
+            return self.name == other.name
         elif isinstance(other, str):
-            return (self.name == other)
+            return self.name == other
         else:
             return False
 
     def __ne__(self, other):
-        return (not self.__eq__(other))
+        return not self.__eq__(other)
 
     @property
     def iid(self):
@@ -96,7 +102,7 @@ class Frontend(object):
 
         """
         cmd = "disable frontend {}".format(self.name)
-        results = cmd_across_all_procs(self._frontend_per_proc, 'command', cmd)
+        results = cmd_across_all_procs(self._frontend_per_proc, "command", cmd)
 
         return check_command(results)
 
@@ -114,7 +120,7 @@ class Frontend(object):
           when something bad happens otherwise returns ``False``.
         """
         cmd = "enable frontend {}".format(self.name)
-        results = cmd_across_all_procs(self._frontend_per_proc, 'command', cmd)
+        results = cmd_across_all_procs(self._frontend_per_proc, "command", cmd)
 
         return check_command(results)
 
@@ -147,7 +153,7 @@ class Frontend(object):
 
         :rtype: ``integer``
         """
-        return self.metric('slim')
+        return self.metric("slim")
 
     @should_die
     def setmaxconn(self, value):
@@ -179,7 +185,7 @@ class Frontend(object):
             raise ValueError("Expected integer and got {}".format(type(value)))
 
         cmd = "set maxconn frontend {} {}".format(self.name, value)
-        results = cmd_across_all_procs(self._frontend_per_proc, 'command', cmd)
+        results = cmd_across_all_procs(self._frontend_per_proc, "command", cmd)
 
         return check_command(results)
 
@@ -225,7 +231,7 @@ class Frontend(object):
           >>> frontend.requests
           5
         """
-        return self.metric('req_tot')
+        return self.metric("req_tot")
 
     def requests_per_process(self):
         """Return the number of requests for the frontend per process.
@@ -245,8 +251,7 @@ class Frontend(object):
           >>> frontend.requests_per_process()
           [(4, 2), (3, 3)]
         """
-        results = cmd_across_all_procs(self._frontend_per_proc, 'metric',
-                                       'req_tot')
+        results = cmd_across_all_procs(self._frontend_per_proc, "metric", "req_tot")
 
         return results
 
@@ -261,7 +266,7 @@ class Frontend(object):
         :rtype: ``bool``
         """
         cmd = "shutdown frontend {}".format(self.name)
-        results = cmd_across_all_procs(self._frontend_per_proc, 'command', cmd)
+        results = cmd_across_all_procs(self._frontend_per_proc, "command", cmd)
 
         return check_command(results)
 
@@ -276,7 +281,7 @@ class Frontend(object):
         :rtype: ``list``
 
         """
-        results = cmd_across_all_procs(self._frontend_per_proc, 'stats')
+        results = cmd_across_all_procs(self._frontend_per_proc, "stats")
 
         return results
 
@@ -296,7 +301,6 @@ class Frontend(object):
           >>> frontend.status
           'OPEN'
         """
-        results = cmd_across_all_procs(self._frontend_per_proc, 'metric',
-                                       'status')
+        results = cmd_across_all_procs(self._frontend_per_proc, "metric", "status")
 
         return compare_values(results)

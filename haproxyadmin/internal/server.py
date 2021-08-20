@@ -12,6 +12,7 @@ HAProxy process.
 
 """
 
+
 class _Server:
     """Class for interacting with a server of a backend in one HAProxy.
 
@@ -21,6 +22,7 @@ class _Server:
     :param sid: server id (unique inside a proxy).
     :type sid: ``string``
     """
+
     def __init__(self, backend, name, sid):
         self.backend = backend
         self._name = name
@@ -50,15 +52,17 @@ class _Server:
         # Fetch data using the last known sid
         try:
             data = self.backend.hap_process.servers_stats(
-                self.backend.name, self.backend.iid, self._sid)[self.name]
+                self.backend.name, self.backend.iid, self._sid
+            )[self.name]
         except KeyError:
             # A lookup on HAProxy with the current id doesn't return
             # an object with our name.
             # Most likely object got different id due to a reshuffle in conf.
             # Thus retrieve all objects to get latest data for the object.
             try:
-                data = self.backend.hap_process.servers_stats(
-                    self.backend.name)[self.name]
+                data = self.backend.hap_process.servers_stats(self.backend.name)[
+                    self.name
+                ]
             except KeyError:
                 # The object has gone from running configuration!
                 # This occurs when object was removed from configuration
@@ -67,10 +71,42 @@ class _Server:
 
         return data
 
+    def server_state_data(self):
+        """Return state data
+
+        Check documentation of ``state_data`` method in :class:`_Frontend`.
+
+        :rtype: ``utils.CSVLine`` object
+        """
+        # Fetch data using the last known sid
+        try:
+            data = self.backend.hap_process.server_state(self.backend.name)[self._sid]
+        except KeyError:
+            # A lookup on HAProxy with the current id doesn't return
+            # an object with our name.
+            # Most likely object got different id due to a reshuffle in conf.
+            # Thus retrieve all objects to get latest data for the object.
+            for sid, server_info in self.backend.hap_process.servers_state(
+                self.backend.name
+            ):
+                if server_info["srv_name"] == self.name:
+                    return server_info
+            # The object has gone from running configuration!
+            # This occurs when object was removed from configuration
+            # and haproxy was reloaded.We cant recover from this situation.
+            raise
+
+        return data
+
     def metric(self, name):
         data = self.stats_data()
 
         return getattr(data, name)
+
+    def state(self, name):
+        data = self.server_state_data()
+
+        return data[name]
 
     def stats(self):
         """Build dictionary for all statistics reported by HAProxy.

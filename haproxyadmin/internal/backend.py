@@ -13,6 +13,7 @@ HAProxy process.
 """
 from haproxyadmin.internal.server import _Server
 
+
 class _Backend:
     """Class for interacting with a backend in one HAProxy process.
 
@@ -22,6 +23,7 @@ class _Backend:
     :param iid: unique proxy id of the backend.
     :type iid: ``integer``
     """
+
     def __init__(self, hap_process, name, iid):
         self.hap_process = hap_process
         self._name = name
@@ -71,7 +73,7 @@ class _Backend:
                 # We cant recover from this situation.
                 raise
 
-        return data['stats']
+        return data["stats"]
 
     def stats(self):
         """Build dictionary for all statistics reported by HAProxy.
@@ -112,15 +114,11 @@ class _Backend:
         servers = self.hap_process.servers_stats(self.name, self.iid)
         if name is not None:
             if name in servers:
-                return_list.append(_Server(self,
-                                           name,
-                                           servers[name].sid))
+                return_list.append(_Server(self, name, servers[name].sid))
             else:
                 return []
         else:
             for _name in servers:
-                return_list.append(_Server(self,
-                                           _name,
-                                           servers[_name].sid))
+                return_list.append(_Server(self, _name, servers[_name].sid))
 
         return return_list

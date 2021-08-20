@@ -12,10 +12,7 @@ This module categorizes the output returned by various commands
 # But, versions prior 1.5.10 was returning 'Done.' message only for ACL/MAPs
 # operations. 73f1d8f447087 commit in haproxy-1.5 makes the output consistent
 # by removing 'Done.' message.
-SUCCESS_OUTPUT_STRINGS = [
-    'Done.',
-    ''
-]
+SUCCESS_OUTPUT_STRINGS = ["Done.", ""]
 
 ERROR_OUTPUT_STRINGS = [
     "'add acl' expects two parameters: ACL identifier and pattern.",
@@ -25,8 +22,8 @@ ERROR_OUTPUT_STRINGS = [
     "agent checks are not enabled on this server.",
     "Agent was not configured on this server, cannot enable.",
     "cannot change health on a tracking server.",
-    "content-based lookup is only supported with the \"show\" and \"clear\" actions",
-    "\"data.<type>\" followed by a value expected",
+    'content-based lookup is only supported with the "show" and "clear" actions',
+    '"data.<type>" followed by a value expected',
     "Data type not stored in this table",
     "'del' only supports 'map' or 'acl'.",
     "'disable' only supports 'agent', 'frontend', 'health', and 'server'.",
@@ -59,15 +56,15 @@ ERROR_OUTPUT_STRINGS = [
     "No such session (use 'show sess').",
     "No such table",
     "OCSP Response updated!",
-    "Optional argument only supports \"data.<store_data_type>\" <operator> <value> and key <key>",
+    'Optional argument only supports "data.<store_data_type>" <operator> <value> and key <key>',
     "Out of memory error.",
     "Proxy is disabled.",
     "Removing keys from ip tables of type other than ip, ipv6, string and integer is not supported",
-    "Require and operator among \"eq\", \"ne\", \"le\", \"ge\", \"lt\", \"gt\"",
+    'Require and operator among "eq", "ne", "le", "ge", "lt", "gt"',
     "Require a valid integer value to compare against",
     "Require a valid integer value to store",
     "Require 'backend/server'.",
-    "Required arguments: <table> \"data.<store_data_type>\" <operator> <value> or <table> key <key>",
+    'Required arguments: <table> "data.<store_data_type>" <operator> <value> or <table> key <key>',
     "Session pointer expected (use 'show sess').",
     "'set map' expects three parameters: map identifier, key and value.",
     "'set maxconn' only supports 'frontend' and 'global'.",
@@ -103,6 +100,11 @@ ERROR_OUTPUT_STRINGS = [
 ]
 
 SUCCESS_STRING_ADDRESS = "IP changed from|no need to change the addr"
-SUCCESS_STRING_PORT = ("no need to change the addr, port changed from|no need "
-                       "to change the addr, no need to change the port"
-                      )
+# There's a typo in the socket output of HAProxy 2.4.0
+SUCCESS_STRING_FQDN = (
+    r"(?:[\w\-_]+/[\w\-_]+ changed its FQDN)|no need to change the (?:FQDN|FDQN)"
+)
+SUCCESS_STRING_PORT = (
+    "no need to change the addr, port changed from|no need "
+    "to change the addr, no need to change the port"
+)

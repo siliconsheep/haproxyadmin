@@ -14,54 +14,63 @@ import glob
 
 from haproxyadmin.frontend import Frontend
 from haproxyadmin.backend import Backend
-from haproxyadmin.utils import (is_unix_socket, cmd_across_all_procs, converter,
-                                calculate, isint, should_die, check_command,
-                                check_output, compare_values, connected_socket)
+from haproxyadmin.utils import (
+    is_unix_socket,
+    cmd_across_all_procs,
+    converter,
+    calculate,
+    isint,
+    should_die,
+    check_command,
+    check_output,
+    compare_values,
+    connected_socket,
+)
 from haproxyadmin.internal.haproxy import _HAProxyProcess
 from haproxyadmin.exceptions import CommandFailed
 
 
 HAPROXY_METRICS = [
-    'SslFrontendMaxKeyRate',
-    'Hard_maxconn',
-    'SessRateLimit',
-    'Process_num',
-    'Memmax_MB',
-    'CompressBpsRateLim',
-    'MaxSslConns',
-    'ConnRateLimit',
-    'SslRateLimit',
-    'MaxConnRate',
-    'CumConns',
-    'SslBackendKeyRate',
-    'SslCacheLookups',
-    'CurrSslConns',
-    'Run_queue',
-    'Maxpipes',
-    'Idle_pct',
-    'SslFrontendKeyRate',
-    'Tasks',
-    'MaxZlibMemUsage',
-    'SslFrontendSessionReuse_pct',
-    'CurrConns',
-    'SslCacheMisses',
-    'SslRate',
-    'CumSslConns',
-    'PipesUsed',
-    'Maxconn',
-    'CompressBpsIn',
-    'ConnRate',
-    'Ulimit-n',
-    'SessRate',
-    'SslBackendMaxKeyRate',
-    'CumReq',
-    'PipesFree',
-    'ZlibMemUsage',
-    'Uptime_sec',
-    'CompressBpsOut',
-    'Maxsock',
-    'MaxSslRate',
-    'MaxSessRate',
+    "SslFrontendMaxKeyRate",
+    "Hard_maxconn",
+    "SessRateLimit",
+    "Process_num",
+    "Memmax_MB",
+    "CompressBpsRateLim",
+    "MaxSslConns",
+    "ConnRateLimit",
+    "SslRateLimit",
+    "MaxConnRate",
+    "CumConns",
+    "SslBackendKeyRate",
+    "SslCacheLookups",
+    "CurrSslConns",
+    "Run_queue",
+    "Maxpipes",
+    "Idle_pct",
+    "SslFrontendKeyRate",
+    "Tasks",
+    "MaxZlibMemUsage",
+    "SslFrontendSessionReuse_pct",
+    "CurrConns",
+    "SslCacheMisses",
+    "SslRate",
+    "CumSslConns",
+    "PipesUsed",
+    "Maxconn",
+    "CompressBpsIn",
+    "ConnRate",
+    "Ulimit-n",
+    "SessRate",
+    "SslBackendMaxKeyRate",
+    "CumReq",
+    "PipesFree",
+    "ZlibMemUsage",
+    "Uptime_sec",
+    "CompressBpsOut",
+    "Maxsock",
+    "MaxSslRate",
+    "MaxSessRate",
 ]
 
 
@@ -95,34 +104,41 @@ class HAProxy(object):
     :rtype: :class:`HAProxy`
     """
 
-    def __init__(self,
-                 socket_dir=None,
-                 socket_file=None,
-                 retry=2,
-                 retry_interval=2,
-                 timeout=1,
-                 ):
+    def __init__(
+        self,
+        socket_dir=None,
+        socket_file=None,
+        retry=2,
+        retry_interval=2,
+        timeout=1,
+    ):
 
         self._hap_processes = []
         socket_files = []
 
         if socket_dir:
             if not os.path.exists(socket_dir):
-                raise ValueError("socket directory does not exist "
-                                 "{}".format(socket_dir))
+                raise ValueError(
+                    "socket directory does not exist " "{}".format(socket_dir)
+                )
 
-            for _file in glob.glob(os.path.join(socket_dir, '*')):
+            for _file in glob.glob(os.path.join(socket_dir, "*")):
                 if is_unix_socket(_file) and connected_socket(_file, timeout):
                     socket_files.append(_file)
-        elif (socket_file and is_unix_socket(socket_file) and
-              connected_socket(socket_file, timeout)):
+        elif (
+            socket_file
+            and is_unix_socket(socket_file)
+            and connected_socket(socket_file, timeout)
+        ):
             socket_files.append(os.path.realpath(socket_file))
         else:
             raise ValueError("UNIX socket file was not set")
 
         if not socket_files:
-            raise ValueError("No valid UNIX socket file was found, directory: "
-                             "{} file: {}".format(socket_dir, socket_file))
+            raise ValueError(
+                "No valid UNIX socket file was found, directory: "
+                "{} file: {}".format(socket_dir, socket_file)
+            )
 
         for so_file in socket_files:
             self._hap_processes.append(
@@ -130,8 +146,8 @@ class HAProxy(object):
                     socket_file=so_file,
                     retry=retry,
                     retry_interval=retry_interval,
-                    timeout=timeout
-                 )
+                    timeout=timeout,
+                )
             )
 
     @should_die
@@ -161,8 +177,7 @@ class HAProxy(object):
         else:
             cmd = "add acl {} {}".format(acl, pattern)
 
-        results = cmd_across_all_procs(self._hap_processes, 'command',
-                                       cmd)
+        results = cmd_across_all_procs(self._hap_processes, "command", cmd)
 
         return check_command(results)
 
@@ -195,8 +210,7 @@ class HAProxy(object):
         else:
             cmd = "add map {} {} {}".format(mapid, key, value)
 
-        results = cmd_across_all_procs(self._hap_processes, 'command',
-                                       cmd)
+        results = cmd_across_all_procs(self._hap_processes, "command", cmd)
 
         return check_command(results)
 
@@ -223,8 +237,7 @@ class HAProxy(object):
         else:
             cmd = "clear acl {}".format(acl)
 
-        results = cmd_across_all_procs(self._hap_processes, 'command',
-                                       cmd)
+        results = cmd_across_all_procs(self._hap_processes, "command", cmd)
 
         return check_command(results)
 
@@ -251,8 +264,7 @@ class HAProxy(object):
         else:
             cmd = "clear map {}".format(mapid)
 
-        results = cmd_across_all_procs(self._hap_processes, 'command',
-                                       cmd)
+        results = cmd_across_all_procs(self._hap_processes, "command", cmd)
 
         return check_command(results)
 
@@ -274,8 +286,7 @@ class HAProxy(object):
         else:
             cmd = "clear counters"
 
-        results = cmd_across_all_procs(self._hap_processes, 'command',
-                                       cmd)
+        results = cmd_across_all_procs(self._hap_processes, "command", cmd)
 
         return check_command(results)
 
@@ -297,7 +308,7 @@ class HAProxy(object):
           >>> hap.totalrequests
           457
         """
-        return self.metric('CumReq')
+        return self.metric("CumReq")
 
     @property
     def processids(self):
@@ -312,7 +323,7 @@ class HAProxy(object):
           >>> hap.processids
           [22029, 22028, 22027, 22026]
         """
-        return [x.metric('Pid') for x in self._hap_processes]
+        return [x.metric("Pid") for x in self._hap_processes]
 
     @should_die
     def del_acl(self, acl, key):
@@ -340,7 +351,7 @@ class HAProxy(object):
           >>> hap.show_acl(acl=4)
           ['0x238f810 /bar/']
         """
-        if key.startswith('0x'):
+        if key.startswith("0x"):
             key = "#{}".format(key)
 
         if isint(acl):
@@ -348,8 +359,7 @@ class HAProxy(object):
         else:
             cmd = "del acl {} {}".format(acl, key)
 
-        results = cmd_across_all_procs(self._hap_processes, 'command',
-                                       cmd)
+        results = cmd_across_all_procs(self._hap_processes, "command", cmd)
 
         return check_command(results)
 
@@ -383,7 +393,7 @@ class HAProxy(object):
           >>> hap.show_map(0)
           ['0x1a78980 11 bar']
         """
-        if key.startswith('0x'):
+        if key.startswith("0x"):
             key = "#{}".format(key)
 
         if isint(mapid):
@@ -391,8 +401,7 @@ class HAProxy(object):
         else:
             cmd = "del map {} {}".format(mapid, key)
 
-        results = cmd_across_all_procs(self._hap_processes, 'command',
-                                       cmd)
+        results = cmd_across_all_procs(self._hap_processes, "command", cmd)
 
         return check_command(results)
 
@@ -417,8 +426,9 @@ class HAProxy(object):
         else:
             cmd = "show errors"
 
-        return cmd_across_all_procs(self._hap_processes, 'command',
-                                    cmd, full_output=True)
+        return cmd_across_all_procs(
+            self._hap_processes, "command", cmd, full_output=True
+        )
 
     def frontends(self, name=None):
         """Build a list of :class:`Frontend <haproxyadmin.frontend.Frontend>`
@@ -494,7 +504,7 @@ class HAProxy(object):
         else:
             cmd = "get acl {} {}".format(acl, value)
 
-        get_results = cmd_across_all_procs(self._hap_processes, 'command', cmd)
+        get_results = cmd_across_all_procs(self._hap_processes, "command", cmd)
         get_info_proc1 = get_results[0][1]
         if not check_output(get_info_proc1):
             raise ValueError(get_info_proc1)
@@ -528,8 +538,7 @@ class HAProxy(object):
         else:
             cmd = "get map {} {}".format(mapid, value)
 
-        get_results = cmd_across_all_procs(self._hap_processes, 'command',
-                                           cmd)
+        get_results = cmd_across_all_procs(self._hap_processes, "command", cmd)
         get_info_proc1 = get_results[0][1]
         if not check_output(get_info_proc1):
             raise CommandFailed(get_info_proc1[0])
@@ -555,7 +564,7 @@ class HAProxy(object):
 
         :rtype: ``integer``
         """
-        return self.metric('Maxconn')
+        return self.metric("Maxconn")
 
     def server(self, hostname, backend=None):
         """Build :class:`Server <haproxyadmin.server.Server> for a server.`
@@ -677,17 +686,17 @@ class HAProxy(object):
     @property
     def ratelimitconn(self):
         """Return the process-wide connection rate limit."""
-        return self.metric('ConnRateLimit')
+        return self.metric("ConnRateLimit")
 
     @property
     def ratelimitsess(self):
         """Return the process-wide session rate limit."""
-        return self.metric('SessRateLimit')
+        return self.metric("SessRateLimit")
 
     @property
     def ratelimitsslsess(self):
         """Return the process-wide ssl session rate limit."""
-        return self.metric('SslRateLimit')
+        return self.metric("SslRateLimit")
 
     @property
     def requests(self):
@@ -735,7 +744,7 @@ class HAProxy(object):
           >>> hap.show_map(0)
           ['0x1a78980 11 new2', '0x1b15c00 22 0']
         """
-        if key.startswith('0x'):
+        if key.startswith("0x"):
             key = "#{}".format(key)
 
         if isint(mapid):
@@ -743,7 +752,7 @@ class HAProxy(object):
         else:
             cmd = "set map {} {} {}".format(mapid, key, value)
 
-        results = cmd_across_all_procs(self._hap_processes, 'command', cmd)
+        results = cmd_across_all_procs(self._hap_processes, "command", cmd)
 
         return check_command(results)
 
@@ -775,8 +784,9 @@ class HAProxy(object):
           >>> hap.show_acl(acl=4)
           ['0x23181c0 /static/css/', '0x238f790 /foo/']
         """
-        return cmd_across_all_procs(self._hap_processes,
-                                    'command', cmd, full_output=True)
+        return cmd_across_all_procs(
+            self._hap_processes, "command", cmd, full_output=True
+        )
 
     @should_die
     def setmaxconn(self, value):
@@ -798,7 +808,7 @@ class HAProxy(object):
             raise ValueError("Expected integer and got {}".format(type(value)))
         cmd = "set maxconn global {}".format(value)
 
-        results = cmd_across_all_procs(self._hap_processes, 'command', cmd)
+        results = cmd_across_all_procs(self._hap_processes, "command", cmd)
 
         return check_command(results)
 
@@ -816,7 +826,7 @@ class HAProxy(object):
             raise ValueError("Expected integer and got {}".format(type(value)))
         cmd = "set rate-limit connections global {}".format(value)
 
-        results = cmd_across_all_procs(self._hap_processes, 'command', cmd)
+        results = cmd_across_all_procs(self._hap_processes, "command", cmd)
 
         return check_command(results)
 
@@ -834,7 +844,7 @@ class HAProxy(object):
             raise ValueError("Expected integer and got {}".format(type(value)))
         cmd = "set rate-limit sessions global {}".format(value)
 
-        results = cmd_across_all_procs(self._hap_processes, 'command', cmd)
+        results = cmd_across_all_procs(self._hap_processes, "command", cmd)
 
         return check_command(results)
 
@@ -852,7 +862,7 @@ class HAProxy(object):
             raise ValueError("Expected integer and got {}".format(type(value)))
         cmd = "set rate-limit ssl-sessions global {}".format(value)
 
-        results = cmd_across_all_procs(self._hap_processes, 'command', cmd)
+        results = cmd_across_all_procs(self._hap_processes, "command", cmd)
 
         return check_command(results)
 
@@ -889,9 +899,9 @@ class HAProxy(object):
         else:
             cmd = "show acl"
 
-        acl_info = cmd_across_all_procs(self._hap_processes, 'command',
-                                        cmd,
-                                        full_output=True)
+        acl_info = cmd_across_all_procs(
+            self._hap_processes, "command", cmd, full_output=True
+        )
         # ACL can't be different per process thus we only return the acl
         # content found in 1st process.
         acl_info_proc1 = acl_info[0][1]
@@ -934,9 +944,9 @@ class HAProxy(object):
                 cmd = "show map {}".format(mapid)
         else:
             cmd = "show map"
-        map_info = cmd_across_all_procs(self._hap_processes, 'command',
-                                        cmd,
-                                        full_output=True)
+        map_info = cmd_across_all_procs(
+            self._hap_processes, "command", cmd, full_output=True
+        )
         # map can't be different per process thus we only return the map
         # content found in 1st process.
         map_info_proc1 = map_info[0][1]
@@ -962,8 +972,7 @@ class HAProxy(object):
           >>> hap.uptime
           '4d 0h16m26s'
         """
-        values = cmd_across_all_procs(self._hap_processes, 'metric',
-                                      'Uptime')
+        values = cmd_across_all_procs(self._hap_processes, "metric", "Uptime")
 
         # Just return the uptime of the 1st process
         return values[0][1]
@@ -981,8 +990,7 @@ class HAProxy(object):
           >>> hap.description
           'test'
         """
-        values = cmd_across_all_procs(self._hap_processes, 'metric',
-                                      'description')
+        values = cmd_across_all_procs(self._hap_processes, "metric", "description")
 
         return compare_values(values)
 
@@ -999,8 +1007,7 @@ class HAProxy(object):
           >>> hap.nodename
           'test.foo.com'
         """
-        values = cmd_across_all_procs(self._hap_processes, 'metric',
-                                      'node')
+        values = cmd_across_all_procs(self._hap_processes, "metric", "node")
 
         return compare_values(values)
 
@@ -1017,8 +1024,7 @@ class HAProxy(object):
           >>> hap.uptimesec
           346588
         """
-        values = cmd_across_all_procs(self._hap_processes, 'metric',
-                                      'Uptime_sec')
+        values = cmd_across_all_procs(self._hap_processes, "metric", "Uptime_sec")
 
         # Just return the uptime of the 1st process
         return values[0][1]
@@ -1036,8 +1042,7 @@ class HAProxy(object):
           >>> hap.releasedate
           '2014/10/31'
         """
-        values = cmd_across_all_procs(self._hap_processes, 'metric',
-                                      'Release_date')
+        values = cmd_across_all_procs(self._hap_processes, "metric", "Release_date")
 
         return compare_values(values)
 
@@ -1056,6 +1061,6 @@ class HAProxy(object):
         # If multiple version of HAProxy share the same socket directory
         # then this wil always raise IncosistentData exception.
         # TODO: Document this on README
-        values = cmd_across_all_procs(self._hap_processes, 'metric', 'Version')
+        values = cmd_across_all_procs(self._hap_processes, "metric", "Version")
 
         return compare_values(values)

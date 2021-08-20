@@ -16,31 +16,31 @@ def main():
     frontend = []
     backend = []
     server = []
-    with open('/home/pparissis/configuration.txt') as file:
+    with open("/home/pparissis/configuration.txt") as file:
         for line in file:
             line = line.strip()
-            match = re.search(r'\d+\. (\w+) (\[.*\]:) .*', line)
+            match = re.search(r"\d+\. (\w+) (\[.*\]:) .*", line)
             if match:
-                if 'F' in match.group(2):
+                if "F" in match.group(2):
                     frontend.append(match.group(1))
-                if 'B' in match.group(2):
+                if "B" in match.group(2):
                     backend.append(match.group(1))
-                if 'S' in match.group(2):
+                if "S" in match.group(2):
                     server.append(match.group(1))
     print("FRONTEND_METRICS = [")
     for m in frontend:
-        print("{:<4}'{}',".format('', m))
+        print("{:<4}'{}',".format("", m))
     print("]")
     print("POOL_METRICS = [")
     for m in backend:
-        print("{:<4}'{}',".format('', m))
+        print("{:<4}'{}',".format("", m))
     print("]")
     print("SERVER_METRICS = [")
     for m in server:
-        print("{:<4}'{}',".format('', m))
+        print("{:<4}'{}',".format("", m))
     print("]")
 
 
 # This is the standard boilerplate that calls the main() function.
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

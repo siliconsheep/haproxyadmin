@@ -16,103 +16,111 @@ from functools import wraps
 import six
 import re
 
-from haproxyadmin.exceptions import (CommandFailed, MultipleCommandResults,
-                                     IncosistentData)
-from haproxyadmin.command_status import (ERROR_OUTPUT_STRINGS,
-        SUCCESS_OUTPUT_STRINGS, SUCCESS_STRING_PORT, SUCCESS_STRING_ADDRESS)
+from haproxyadmin.exceptions import (
+    CommandFailed,
+    MultipleCommandResults,
+    IncosistentData,
+)
+from haproxyadmin.command_status import (
+    ERROR_OUTPUT_STRINGS,
+    SUCCESS_OUTPUT_STRINGS,
+    SUCCESS_STRING_PORT,
+    SUCCESS_STRING_ADDRESS,
+    SUCCESS_STRING_FQDN,
+)
 
 METRICS_SUM = [
-    'CompressBpsIn',
-    'CompressBpsOut',
-    'CompressBpsRateLim',
-    'ConnRate',
-    'ConnRateLimit',
-    'CumConns',
-    'CumReq',
-    'CumSslConns',
-    'CurrConns',
-    'CurrSslConns',
-    'Hard_maxconn',
-    'Idle_pct',
-    'MaxConnRate',
-    'MaxSessRate',
-    'MaxSslConns',
-    'MaxSslRate',
-    'MaxZlibMemUsage',
-    'Maxconn',
-    'Maxpipes',
-    'Maxsock',
-    'Memmax_MB',
-    'PipesFree',
-    'PipesUsed',
-    'Process_num',
-    'Run_queue',
-    'SessRate',
-    'SessRateLimit',
-    'SslBackendKeyRate',
-    'SslBackendMaxKeyRate',
-    'SslCacheLookups',
-    'SslCacheMisses',
-    'SslFrontendKeyRate',
-    'SslFrontendMaxKeyRate',
-    'SslFrontendSessionReuse_pct',
-    'SslRate',
-    'SslRateLimit',
-    'Tasks',
-    'Ulimit-n',
-    'ZlibMemUsage',
-    'bin',
-    'bout',
-    'chkdown',
-    'chkfail',
-    'comp_byp',
-    'comp_in',
-    'comp_out',
-    'comp_rsp',
-    'cli_abrt',
-    'dreq',
-    'dresp',
-    'ereq',
-    'eresp',
-    'econ',
-    'hrsp_1xx',
-    'hrsp_2xx',
-    'hrsp_3xx',
-    'hrsp_4xx',
-    'hrsp_5xx',
-    'hrsp_other',
-    'lbtot',
-    'qcur',
-    'qmax',
-    'rate',
-    'rate_lim',
-    'rate_max',
-    'req_rate',
-    'req_rate_max',
-    'req_tot',
-    'scur',
-    'slim',
-    'srv_abrt',
-    'smax',
-    'stot',
-    'wretr',
-    'wredis',
+    "CompressBpsIn",
+    "CompressBpsOut",
+    "CompressBpsRateLim",
+    "ConnRate",
+    "ConnRateLimit",
+    "CumConns",
+    "CumReq",
+    "CumSslConns",
+    "CurrConns",
+    "CurrSslConns",
+    "Hard_maxconn",
+    "Idle_pct",
+    "MaxConnRate",
+    "MaxSessRate",
+    "MaxSslConns",
+    "MaxSslRate",
+    "MaxZlibMemUsage",
+    "Maxconn",
+    "Maxpipes",
+    "Maxsock",
+    "Memmax_MB",
+    "PipesFree",
+    "PipesUsed",
+    "Process_num",
+    "Run_queue",
+    "SessRate",
+    "SessRateLimit",
+    "SslBackendKeyRate",
+    "SslBackendMaxKeyRate",
+    "SslCacheLookups",
+    "SslCacheMisses",
+    "SslFrontendKeyRate",
+    "SslFrontendMaxKeyRate",
+    "SslFrontendSessionReuse_pct",
+    "SslRate",
+    "SslRateLimit",
+    "Tasks",
+    "Ulimit-n",
+    "ZlibMemUsage",
+    "bin",
+    "bout",
+    "chkdown",
+    "chkfail",
+    "comp_byp",
+    "comp_in",
+    "comp_out",
+    "comp_rsp",
+    "cli_abrt",
+    "dreq",
+    "dresp",
+    "ereq",
+    "eresp",
+    "econ",
+    "hrsp_1xx",
+    "hrsp_2xx",
+    "hrsp_3xx",
+    "hrsp_4xx",
+    "hrsp_5xx",
+    "hrsp_other",
+    "lbtot",
+    "qcur",
+    "qmax",
+    "rate",
+    "rate_lim",
+    "rate_max",
+    "req_rate",
+    "req_rate_max",
+    "req_tot",
+    "scur",
+    "slim",
+    "srv_abrt",
+    "smax",
+    "stot",
+    "wretr",
+    "wredis",
 ]
 
 METRICS_AVG = [
-    'act',
-    'bck',
-    'check_duration',
-    'ctime',
-    'downtime',
-    'lastchg',
-    'lastsess',
-    'qlimit',
-    'qtime',
-    'rtime',
-    'throttle',
-    'ttime',
-    'weight',
+    "act",
+    "bck",
+    "check_duration",
+    "ctime",
+    "downtime",
+    "lastchg",
+    "lastsess",
+    "qlimit",
+    "qtime",
+    "rtime",
+    "throttle",
+    "ttime",
+    "weight",
 ]
 
 
@@ -127,11 +135,12 @@ def should_die(old_implementation):
     ``False`` it returns ``True`` if decorated function run successfully or
     ``False`` if an exception was raised.
     """
+
     @wraps(old_implementation)
     def new_implementation(*args, **kwargs):
         try:
-            die = kwargs['die']
-            del(kwargs['die'])
+            die = kwargs["die"]
+            del kwargs["die"]
         except KeyError:
             die = True
 
@@ -158,6 +167,7 @@ def is_unix_socket(path):
 
     return stat.S_ISSOCK(mode)
 
+
 def connected_socket(path, timeout):
     """Check if socket file is a valid HAProxy socket file.
 
@@ -177,7 +187,7 @@ def connected_socket(path, timeout):
         unix_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         unix_socket.settimeout(timeout)
         unix_socket.connect(path)
-        unix_socket.send(six.b('show info' + '\n'))
+        unix_socket.send(six.b("show info" + "\n"))
         file_handle = unix_socket.makefile()
     except (socket.timeout, OSError):
         return False
@@ -192,7 +202,7 @@ def connected_socket(path, timeout):
         unix_socket.close()
 
     try:
-        return hap_info['Name'] in ['HAProxy', 'hapee-lb']
+        return hap_info["Name"] in ["HAProxy", "hapee-lb"]
     except KeyError:
         return False
 
@@ -217,7 +227,7 @@ def cmd_across_all_procs(hap_objects, method, *arg, **kargs):
     results = []
     for obj in hap_objects:
         results.append(
-            (getattr(obj, 'process_nb'), getattr(obj, method)(*arg, **kargs))
+            (getattr(obj, "process_nb"), getattr(obj, method)(*arg, **kargs))
         )
 
     return results
@@ -324,7 +334,8 @@ def check_command(results):
     else:
         raise MultipleCommandResults(results)
 
-def check_command_addr_port(change_type, results):
+
+def check_command_fqdn_addr_port(change_type, results):
     """Check if command to set port or address was successfully executed.
 
     Unfortunately, haproxy returns many different combinations of output when
@@ -348,12 +359,14 @@ def check_command_addr_port(change_type, results):
     :raise: :class:`.MultipleCommandResults`, :class:`.CommandFailed` and
       :class:`ValueError`.
     """
-    if change_type == 'addr':
+    if change_type == "addr":
         _match = SUCCESS_STRING_ADDRESS
-    elif change_type == 'port':
+    if change_type == "fqdn":
+        _match = SUCCESS_STRING_FQDN
+    elif change_type == "port":
         _match = SUCCESS_STRING_PORT
     else:
-        raise ValueError('invalid value for change_type')
+        raise ValueError("invalid value for change_type")
 
     if elements_of_list_same([msg[1] for msg in results]):
         msg = results[0][1]
@@ -384,11 +397,12 @@ def calculate(name, metrics):
     if name in METRICS_SUM:
         return sum(metrics)
     elif name in METRICS_AVG:
-        return int(sum(metrics)/len(metrics))
+        return int(sum(metrics) / len(metrics))
     else:
         # This is to catch the case where the caller forgets to check if
         # metric name is a valide metric for HAProxy.
         raise ValueError("Unknown type of calculation for {}".format(name))
+
 
 def isint(value):
     """Check if input can be converted to an integer
@@ -404,6 +418,7 @@ def isint(value):
         return True
     except ValueError:
         return False
+
 
 def converter(value):
     """Tries to convert input value to an integer.
@@ -484,6 +499,7 @@ class CSVLine(object):
           _index = self.heads.index(attr)
       ValueError: 'bar' is not in list
     """
+
     # This holds the field names of the CSV
     heads = []
 
@@ -534,11 +550,42 @@ def info2dict(raw_info):
     info = {}
     for line in raw_info:
         line = line.lstrip()
-        if ': ' in line:
-            key, value = line.split(': ', 1)
+        if ": " in line:
+            key, value = line.split(": ", 1)
             info[key] = value
 
     return info
+
+
+def serverstate2dict(input):
+    """Build a nested dictionary structure.
+
+    :param input: data returned by 'show servers state' command in a HAProxy specific
+      format. Only version 1 is supported
+    :type input: ``list``
+    :return: a nested dictionary with all counters/settings found in the input.
+    """
+
+    version = input.pop(0)
+    if version.strip() != "1":
+        raise ValueError("only version 1 is supported for 'show servers state'")
+
+    headers = input.pop(0)[2:].strip().split(" ")
+
+    output = {}
+    for line in input:
+        server_info = {}
+        for index, value in enumerate(line.strip().split(" ")):
+            server_info[headers[index]] = value
+
+        backend_name = server_info["be_name"]
+        server_id = server_info["srv_id"]
+
+        if backend_name not in output:
+            output[backend_name] = {}
+        output[backend_name][server_id] = server_info
+
+    return output
 
 
 def stat2dict(csv_data):
@@ -571,15 +618,12 @@ def stat2dict(csv_data):
     :rtype: ``dict``
     """
     heads = []
-    dicts = {
-        'backends': {},
-        'frontends': {}
-    }
+    dicts = {"backends": {}, "frontends": {}}
 
     # get the header line
     headers = csv_data.pop(0)
     # make a shiny list of heads
-    heads = headers[2:].strip().split(',')
+    heads = headers[2:].strip().split(",")
     # set for all _CSVLine object the header fields
     CSVLine.heads = heads
 
@@ -611,30 +655,30 @@ def stat2dict(csv_data):
         line = line.strip()
         if line:
             # make list of parts
-            parts = line.split(',')
+            parts = line.split(",")
             # each line is a distinct object
             csvline = CSVLine(parts)
             # parts[0] => pxname field, backend or frontend name
             # parts[1] => svname field, servername or BACKEND or FRONTEND
-            if parts[1] == 'FRONTEND':
+            if parts[1] == "FRONTEND":
                 # This is a frontend line.
                 # Frontend definitions aren't spread across multiple lines.
-                dicts['frontends'][parts[0]] = csvline
-            elif (parts[1] == 'BACKEND' and parts[0] not in dicts['backends']):
+                dicts["frontends"][parts[0]] = csvline
+            elif parts[1] == "BACKEND" and parts[0] not in dicts["backends"]:
                 # I see this backend information for 1st time.
-                dicts['backends'][parts[0]] = {}
-                dicts['backends'][parts[0]]['servers'] = {}
-                dicts['backends'][parts[0]]['stats'] = csvline
+                dicts["backends"][parts[0]] = {}
+                dicts["backends"][parts[0]]["servers"] = {}
+                dicts["backends"][parts[0]]["stats"] = csvline
             else:
-                if parts[0] not in dicts['backends']:
+                if parts[0] not in dicts["backends"]:
                     # This line holds server information for a backend I haven't
                     # seen before, thus create the backend structure and store
                     # server details.
-                    dicts['backends'][parts[0]] = {}
-                    dicts['backends'][parts[0]]['servers'] = {}
-                if parts[1] == 'BACKEND':
-                    dicts['backends'][parts[0]]['stats'] = csvline
+                    dicts["backends"][parts[0]] = {}
+                    dicts["backends"][parts[0]]["servers"] = {}
+                if parts[1] == "BACKEND":
+                    dicts["backends"][parts[0]]["stats"] = csvline
                 else:
-                    dicts['backends'][parts[0]]['servers'][parts[1]] = csvline
+                    dicts["backends"][parts[0]]["servers"][parts[1]] = csvline
 
     return dicts

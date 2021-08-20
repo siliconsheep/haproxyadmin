@@ -10,17 +10,24 @@ This module provides the :class:`Server <.Server>` class which allows to
 run operation for a server.
 
 """
-from haproxyadmin.utils import (calculate, cmd_across_all_procs, compare_values,
-                                should_die, check_command, converter,
-                                check_command_addr_port, elements_of_list_same)
+from haproxyadmin.utils import (
+    calculate,
+    cmd_across_all_procs,
+    compare_values,
+    should_die,
+    check_command,
+    converter,
+    check_command_fqdn_addr_port,
+    elements_of_list_same,
+)
 from haproxyadmin.exceptions import IncosistentData
 
 
-STATE_ENABLE = 'enable'
-STATE_DISABLE = 'disable'
-STATE_READY = 'ready'
-STATE_DRAIN = 'drain'
-STATE_MAINT = 'maint'
+STATE_ENABLE = "enable"
+STATE_DISABLE = "disable"
+STATE_READY = "ready"
+STATE_DRAIN = "drain"
+STATE_MAINT = "maint"
 VALID_STATES = [
     STATE_ENABLE,
     STATE_DISABLE,
@@ -29,45 +36,45 @@ VALID_STATES = [
     STATE_READY,
 ]
 SERVER_METRICS = [
-    'act',
-    'bck',
-    'bin',
-    'bout',
-    'check_duration',
-    'chkdown',
-    'chkfail',
-    'cli_abrt',
-    'ctime',
-    'downtime',
-    'dresp',
-    'econ',
-    'eresp',
-    'hrsp_1xx',
-    'hrsp_2xx',
-    'hrsp_3xx',
-    'hrsp_4xx',
-    'hrsp_5xx',
-    'hrsp_other',
-    'lastchg',
-    'lastsess',
-    'lbtot',
-    'qcur',
-    'qlimit',
-    'qmax',
-    'qtime',
-    'rate',
-    'rate_max',
-    'rtime',
-    'scur',
-    'slim',
-    'smax',
-    'srv_abrt',
-    'stot',
-    'throttle',
-    'ttime',
-    'weight',
-    'wredis',
-    'wretr',
+    "act",
+    "bck",
+    "bin",
+    "bout",
+    "check_duration",
+    "chkdown",
+    "chkfail",
+    "cli_abrt",
+    "ctime",
+    "downtime",
+    "dresp",
+    "econ",
+    "eresp",
+    "hrsp_1xx",
+    "hrsp_2xx",
+    "hrsp_3xx",
+    "hrsp_4xx",
+    "hrsp_5xx",
+    "hrsp_other",
+    "lastchg",
+    "lastsess",
+    "lbtot",
+    "qcur",
+    "qlimit",
+    "qmax",
+    "qtime",
+    "rate",
+    "rate_max",
+    "rtime",
+    "scur",
+    "slim",
+    "smax",
+    "srv_abrt",
+    "stot",
+    "throttle",
+    "ttime",
+    "weight",
+    "wredis",
+    "wretr",
 ]
 
 
@@ -87,14 +94,14 @@ class Server:
     # built-in comparison operator is adjusted
     def __eq__(self, other):
         if isinstance(other, Server):
-            return (self.name == other.name)
+            return self.name == other.name
         elif isinstance(other, str):
-            return (self.name == other)
+            return self.name == other
         else:
             return False
 
     def __ne__(self, other):
-        return (not self.__eq__(other))
+        return not self.__eq__(other)
 
     @property
     def sid(self):
@@ -114,9 +121,7 @@ class Server:
 
         :rtype: ``integer``
         """
-        values = cmd_across_all_procs(
-            self._server_per_proc, 'metric', 'check_code'
-        )
+        values = cmd_across_all_procs(self._server_per_proc, "metric", "check_code")
 
         return compare_values(values)
 
@@ -126,9 +131,7 @@ class Server:
 
         :rtype: ``string``
         """
-        values = cmd_across_all_procs(
-            self._server_per_proc, 'metric', 'check_status'
-        )
+        values = cmd_across_all_procs(self._server_per_proc, "metric", "check_status")
 
         return compare_values(values)
 
@@ -142,9 +145,7 @@ class Server:
           :type port: ``string``
           :rtype: ``bool``
         """
-        values = cmd_across_all_procs(
-            self._server_per_proc, 'metric', 'addr'
-        )
+        values = cmd_across_all_procs(self._server_per_proc, "metric", "addr")
 
         try:
             value = compare_values(values)
@@ -154,13 +155,13 @@ class Server:
             # per process and not the assigned port.
             # Since we want to report the port, we simply catch that case and
             # report the assigned port.
-            ports_across_proc = [value[1].split(':')[1] for value in values]
+            ports_across_proc = [value[1].split(":")[1] for value in values]
             if not elements_of_list_same(ports_across_proc):
                 raise exc
             else:
                 return ports_across_proc[0]
         else:
-            return value.split(':')[1]
+            return value.split(":")[1]
 
     @port.setter
     def port(self, port):
@@ -168,9 +169,9 @@ class Server:
         cmd = "set server {}/{} addr {} port {}".format(
             self.backendname, self.name, self.address, port
         )
-        results = cmd_across_all_procs(self._server_per_proc, 'command', cmd)
+        results = cmd_across_all_procs(self._server_per_proc, "command", cmd)
 
-        return check_command_addr_port('port', results)
+        return check_command_fqdn_addr_port("port", results)
 
     @property
     def address(self):
@@ -182,9 +183,7 @@ class Server:
           :type address: ``string``
           :rtype: ``bool``
         """
-        values = cmd_across_all_procs(
-            self._server_per_proc, 'metric', 'addr'
-        )
+        values = cmd_across_all_procs(self._server_per_proc, "metric", "addr")
 
         try:
             value = compare_values(values)
@@ -194,23 +193,58 @@ class Server:
             # per process and not the assigned address.
             # Since we want to report the address, we simply catch that case
             # and report the assigned address.
-            addr_across_proc = [value[1].split(':')[0] for value in values]
+            addr_across_proc = [value[1].split(":")[0] for value in values]
             if not elements_of_list_same(addr_across_proc):
                 raise exc
             else:
                 return addr_across_proc[0]
         else:
-            return value.split(':')[0]
+            return value.split(":")[0]
 
     @address.setter
     def address(self, address):
         """Set server's address."""
-        cmd = "set server {}/{} addr {}".format(
-            self.backendname, self.name, address
-        )
-        results = cmd_across_all_procs(self._server_per_proc, 'command', cmd)
+        cmd = "set server {}/{} addr {}".format(self.backendname, self.name, address)
+        results = cmd_across_all_procs(self._server_per_proc, "command", cmd)
 
-        return check_command_addr_port('addr', results)
+        return check_command_fqdn_addr_port("addr", results)
+
+    @property
+    def fqdn(self):
+        """The assigned fqdn of server.
+
+        :getter: :rtype: ``string``
+        :setter:
+          :param address: fqdn to set.
+          :type address: ``string``
+          :rtype: ``bool``
+        """
+        values = cmd_across_all_procs(self._server_per_proc, "state", "srv_fqdn")
+
+        return compare_values(values)
+        # try:
+        #     value = compare_values(values)
+        # except IncosistentData as exc:
+        #     # haproxy returns fqdn:port and compare_values() may raise
+        #     # IncosistentData exception because assigned port is different
+        #     # per process and not the assigned fqdn.
+        #     # Since we want to report the fqdn, we simply catch that case
+        #     # and report the assigned fqdn.
+        #     addr_across_proc = [value[1].split(":")[0] for value in values]
+        #     if not elements_of_list_same(addr_across_proc):
+        #         raise exc
+        #     else:
+        #         return addr_across_proc[0]
+        # else:
+        #     return value.split(":")[0]
+
+    @fqdn.setter
+    def fqdn(self, fqdn):
+        """Set server's fqdn."""
+        cmd = "set server {}/{} fqdn {}".format(self.backendname, self.name, fqdn)
+        results = cmd_across_all_procs(self._server_per_proc, "command", cmd)
+
+        return check_command_fqdn_addr_port("fqdn", results)
 
     @property
     def last_status(self):
@@ -218,9 +252,7 @@ class Server:
 
         :rtype: ``string``
         """
-        values = cmd_across_all_procs(
-            self._server_per_proc, 'metric', 'last_chk'
-        )
+        values = cmd_across_all_procs(self._server_per_proc, "metric", "last_chk")
 
         return compare_values(values)
 
@@ -230,9 +262,7 @@ class Server:
 
         :rtype: ``string``
         """
-        values = cmd_across_all_procs(
-            self._server_per_proc, 'metric', 'last_agt'
-        )
+        values = cmd_across_all_procs(self._server_per_proc, "metric", "last_agt")
 
         return compare_values(values)
 
@@ -275,7 +305,7 @@ class Server:
         :rtype: ``integer``
 
         """
-        return self.metric('stot')
+        return self.metric("stot")
 
     def requests_per_process(self):
         """Return the number of requests for the server per process.
@@ -284,7 +314,7 @@ class Server:
           element is requests.
 
         """
-        results = cmd_across_all_procs(self._server_per_proc, 'metric', 'stot')
+        results = cmd_across_all_procs(self._server_per_proc, "metric", "stot")
 
         return results
 
@@ -340,16 +370,14 @@ class Server:
 
         """
         if state not in VALID_STATES:
-            states = ', '.join(VALID_STATES)
+            states = ", ".join(VALID_STATES)
             raise ValueError("Wrong state, allowed states {}".format(states))
-        if state in ('enable', 'disable'):
+        if state in ("enable", "disable"):
             cmd = "{} server {}/{}".format(state, self.backendname, self.name)
         else:
-            cmd = "set server {}/{} state {}".format(
-                self.backendname, self.name, state
-            )
+            cmd = "set server {}/{} state {}".format(self.backendname, self.name, state)
 
-        results = cmd_across_all_procs(self._server_per_proc, 'command', cmd)
+        results = cmd_across_all_procs(self._server_per_proc, "command", cmd)
 
         return check_command(results)
 
@@ -364,7 +392,7 @@ class Server:
         :rtype: ``list``
 
         """
-        values = cmd_across_all_procs(self._server_per_proc, 'stats')
+        values = cmd_across_all_procs(self._server_per_proc, "stats")
 
         return values
 
@@ -377,7 +405,7 @@ class Server:
           per process
 
         """
-        values = cmd_across_all_procs(self._server_per_proc, 'metric', 'status')
+        values = cmd_across_all_procs(self._server_per_proc, "metric", "status")
 
         return compare_values(values)
 
@@ -389,7 +417,7 @@ class Server:
         :raise: :class:`IncosistentData` exception if weight is different
           per process
         """
-        values = cmd_across_all_procs(self._server_per_proc, 'metric', 'weight')
+        values = cmd_across_all_procs(self._server_per_proc, "metric", "weight")
 
         return compare_values(values)
 
@@ -428,15 +456,16 @@ class Server:
             "are allowed when the value ends with the '%' sign pass as "
             "string"
         )
-        if isinstance(value, int) and 0 <= value < 256 or (
-                isinstance(value, str) and value.endswith('%')):
-            cmd = "set weight {}/{} {}".format(self.backendname,
-                                               self.name,
-                                               value)
+        if (
+            isinstance(value, int)
+            and 0 <= value < 256
+            or (isinstance(value, str) and value.endswith("%"))
+        ):
+            cmd = "set weight {}/{} {}".format(self.backendname, self.name, value)
         else:
             raise ValueError(msg)
 
-        results = cmd_across_all_procs(self._server_per_proc, 'command', cmd)
+        results = cmd_across_all_procs(self._server_per_proc, "command", cmd)
 
         return check_command(results)
 
@@ -448,8 +477,7 @@ class Server:
         :rtype: ``bool``
         """
 
-        cmd = "shutdown sessions server {b}/{s}".format(b=self.backendname,
-                                                        s=self.name)
-        results = cmd_across_all_procs(self._server_per_proc, 'command', cmd)
+        cmd = "shutdown sessions server {b}/{s}".format(b=self.backendname, s=self.name)
+        results = cmd_across_all_procs(self._server_per_proc, "command", cmd)
 
         return check_command(results)

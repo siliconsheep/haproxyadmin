@@ -17,9 +17,12 @@ import errno
 import time
 import six
 
-from haproxyadmin.utils import (info2dict, stat2dict)
-from haproxyadmin.exceptions import (SocketTransportError, SocketTimeout,
-                                     SocketConnectionError)
+from haproxyadmin.utils import info2dict, stat2dict, serverstate2dict
+from haproxyadmin.exceptions import (
+    SocketTransportError,
+    SocketTimeout,
+    SocketConnectionError,
+)
 from haproxyadmin.internal.frontend import _Frontend
 from haproxyadmin.internal.backend import _Backend
 
@@ -40,15 +43,17 @@ class _HAProxyProcess:
     :type timeout: ``float``
     :type retry_interval: ``integer``
     """
+
     def __init__(self, socket_file, retry=3, retry_interval=2, timeout=1):
         self.socket_file = socket_file
         self.hap_stats = {}
+        self.hap_server_state = {}
         self.hap_info = {}
         self.retry = retry
         self.retry_interval = retry_interval
         self.timeout = timeout
         # process number associated with this object
-        self.process_nb = self.metric('Process_num')
+        self.process_nb = self.metric("Process_num")
 
     def command(self, command, full_output=False):
         """Send a command to HAProxy over UNIX stats socket.
@@ -65,7 +70,7 @@ class _HAProxyProcess:
         """
         data = []  # hold data returned from socket
         raised = None  # hold possible exception raised during connect phase
-        attempt = 0 # times to attempt to connect after a connection failure
+        attempt = 0  # times to attempt to connect after a connection failure
         if self.retry == 0:
             # 0 means retry indefinitely
             attempt = -1
@@ -80,7 +85,7 @@ class _HAProxyProcess:
                 unix_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
                 unix_socket.settimeout(self.timeout)
                 unix_socket.connect(self.socket_file)
-                unix_socket.send(six.b(command + '\n'))
+                unix_socket.send(six.b(command + "\n"))
                 file_handle = unix_socket.makefile()
                 data = file_handle.read().splitlines()
             except socket.timeout:
@@ -103,7 +108,7 @@ class _HAProxyProcess:
                 # We only do that when we get more than 1 line, which only
                 # happens when we ask for ACL/MAP/etc and not for giving cmds
                 # such as disable/enable server
-                if len(data) > 1 and data[-1] == '':
+                if len(data) > 1 and data[-1] == "":
                     data.pop()
                 # make sure possible previous errors are cleared
                 raised = None
@@ -124,15 +129,14 @@ class _HAProxyProcess:
             else:
                 return data[0]
         else:
-            raise ValueError("no data returned from socket {}".format(
-                self.socket_file))
+            raise ValueError("no data returned from socket {}".format(self.socket_file))
 
     def proc_info(self):
         """Return a dictionary containing information about HAProxy daemon.
 
         :rtype: dictionary, see utils.info2dict() for details
         """
-        raw_info = self.command('show info', full_output=True)
+        raw_info = self.command("show info", full_output=True)
 
         return info2dict(raw_info)
 
@@ -157,12 +161,25 @@ class _HAProxyProcess:
         :type sid: ``integer``
         :rtype: dict, see ``utils.stat2dict`` for details on the structure
         """
-        csv_data = self.command('show stat {i} {o} {s}'.format(i=iid,
-                                                               o=obj_type,
-                                                               s=sid),
-                                full_output=True)
+        csv_data = self.command(
+            "show stat {i} {o} {s}".format(i=iid, o=obj_type, s=sid), full_output=True
+        )
         self.hap_stats = stat2dict(csv_data)
         return self.hap_stats
+
+    def server_state(self, backend):
+        """Return a nested dictionary containing backend information.
+
+        :param sid: a server ID, -1 to dump everything.
+        :type sid: ``integer``
+        :rtype: dict, see ``utils.serverstate2dict`` for details on the structure
+        """
+        output = self.command(
+            "show servers state {}".format(backend),
+            full_output=True,
+        )
+        self.hap_server_state = serverstate2dict(output)[backend]
+        return self.hap_server_state
 
     def metric(self, name):
         return self.proc_info()[name]
@@ -178,7 +195,7 @@ class _HAProxyProcess:
         :retur: a dictinary with backend information.
         :rtype: ``dict``
         """
-        return self.stats(iid, obj_type=2)['backends']
+        return self.stats(iid, obj_type=2)["backends"]
 
     def frontends_stats(self, iid=-1):
         """Build the data structure for frontends
@@ -191,12 +208,10 @@ class _HAProxyProcess:
         :retur: a dictinary with frontend information.
         :rtype: ``dict``
         """
-        return self.stats(iid, obj_type=1)['frontends']
+        return self.stats(iid, obj_type=1)["frontends"]
 
     def servers_stats(self, backend, iid=-1, sid=-1):
-        return self.stats(iid=iid,
-                          obj_type=6,
-                          sid=sid)['backends'][backend]['servers']
+        return self.stats(iid=iid, obj_type=6, sid=sid)["backends"][backend]["servers"]
 
     def backends(self, name=None):
         """Build _backend objects for each backend.
@@ -211,16 +226,12 @@ class _HAProxyProcess:
         backends = self.backends_stats()
         if name is not None:
             if name in backends:
-                return_list.append(_Backend(self,
-                                            name,
-                                            backends[name]['stats'].iid))
+                return_list.append(_Backend(self, name, backends[name]["stats"].iid))
             else:
                 return return_list
         else:
             for name in backends:
-                return_list.append(_Backend(self,
-                                            name,
-                                            backends[name]['stats'].iid))
+                return_list.append(_Backend(self, name, backends[name]["stats"].iid))
 
         return return_list
 
@@ -237,15 +248,11 @@ class _HAProxyProcess:
         frontends = self.frontends_stats()
         if name is not None:
             if name in frontends:
-                return_list.append(_Frontend(self,
-                                             name,
-                                             frontends[name].iid))
+                return_list.append(_Frontend(self, name, frontends[name].iid))
             else:
                 return return_list
         else:
             for frontend in frontends:
-                return_list.append(_Frontend(self,
-                                             frontend,
-                                             frontends[frontend].iid))
+                return_list.append(_Frontend(self, frontend, frontends[frontend].iid))
 
         return return_list

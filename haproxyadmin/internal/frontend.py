@@ -23,6 +23,7 @@ class _Frontend:
     :param iid: unique proxy id of the frontend.
     :type iid: ``integer``
     """
+
     def __init__(self, hap_process, name, iid):
         self.hap_process = hap_process
         self._name = name
@@ -87,9 +88,9 @@ class _Frontend:
     def stats(self):
         """Build dictionary for all statistics reported by HAProxy.
 
-        :return: A dictionary with statistics
-        :rtype: ``dict``
-8. split internal to multiple files
+                :return: A dictionary with statistics
+                :rtype: ``dict``
+        8. split internal to multiple files
         """
         data = self.stats_data()
         keys = data.heads
