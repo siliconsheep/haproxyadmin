@@ -155,13 +155,13 @@ class Server:
             # per process and not the assigned port.
             # Since we want to report the port, we simply catch that case and
             # report the assigned port.
-            ports_across_proc = [value[1].split(":")[1] for value in values]
+            ports_across_proc = [value[1].split(":")[-1] for value in values]
             if not elements_of_list_same(ports_across_proc):
                 raise exc
             else:
                 return ports_across_proc[0]
         else:
-            return value.split(":")[1]
+            return value.split(":")[-1]
 
     @port.setter
     def port(self, port):
@@ -193,13 +193,13 @@ class Server:
             # per process and not the assigned address.
             # Since we want to report the address, we simply catch that case
             # and report the assigned address.
-            addr_across_proc = [value[1].split(":")[0] for value in values]
+            addr_across_proc = [":".join(value[1].split(":")[:-1]) for value in values]
             if not elements_of_list_same(addr_across_proc):
                 raise exc
             else:
                 return addr_across_proc[0]
         else:
-            return value.split(":")[0]
+            return ":".join(value.split(":")[:-1])
 
     @address.setter
     def address(self, address):
