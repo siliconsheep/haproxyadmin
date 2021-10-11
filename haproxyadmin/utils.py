@@ -361,7 +361,7 @@ def check_command_fqdn_addr_port(change_type, results):
     """
     if change_type == "addr":
         _match = SUCCESS_STRING_ADDRESS
-    if change_type == "fqdn":
+    elif change_type == "fqdn":
         _match = SUCCESS_STRING_FQDN
     elif change_type == "port":
         _match = SUCCESS_STRING_PORT
